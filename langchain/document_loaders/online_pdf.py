@@ -1,7 +1,6 @@
 """Loader that loads online PDF files."""
 
 import tempfile
-from pathlib import Path
 from typing import List
 
 import requests
@@ -22,9 +21,9 @@ class OnlinePDFLoader(BaseLoader):
         """Load documents."""
         r = requests.get(self.web_path)
         with tempfile.TemporaryDirectory() as temp_dir:
-            file_path = Path(temp_dir) / "online_file.pdf"
+            file_path = f"{temp_dir}/online_file.pdf"
             file = open(file_path, "wb")
             file.write(r.content)
             file.close()
-            loader = UnstructuredPDFLoader(str(file_path))
+            loader = UnstructuredPDFLoader(file_path)
             return loader.load()

@@ -103,14 +103,39 @@ class ConversationBufferMemory(Memory, BaseModel):
         else:
             prompt_input_key = self.input_key
         if self.output_key is None:
-            if len(outputs) != 1:
-                raise ValueError(f"One output key expected, got {outputs.keys()}")
+            # if len(outputs) != 1:
+            #     raise ValueError(f"One output key expected, got {outputs.keys()}")
             output_key = list(outputs.keys())[0]
         else:
             output_key = self.output_key
         human = f"{self.human_prefix}: " + inputs[prompt_input_key]
+
         ai = f"{self.ai_prefix}: " + outputs[output_key]
-        self.buffer += "\n" + "\n".join([human, ai])
+        intermediate_steps = ""
+        if (
+            "intermediate_steps" in outputs
+            and outputs["intermediate_steps"]
+            and len(outputs["intermediate_steps"]) > 0
+        ):
+            intermediate_steps = "Internal Tools Results: "
+            for i in range(len(outputs["intermediate_steps"])):
+                intermediate_steps += outputs["intermediate_steps"][i][1] + " "
+
+        history_parts = (
+            [human, intermediate_steps, ai] if intermediate_steps else [human, ai]
+        )
+
+        buffer_lines = self.buffer.splitlines()
+        # remove lines where Internal Tools Results is there
+        buffer_lines = [
+            line for line in buffer_lines if "Internal Tools Results" not in line
+        ]
+        # remove empty lines
+        buffer_lines = [line for line in buffer_lines if line.strip()]
+        # keep only last 2 lines
+        self.buffer = "\n".join(buffer_lines[-2:])
+
+        self.buffer += "\n" + "\n".join(history_parts)
 
     def clear(self) -> None:
         """Clear memory contents."""

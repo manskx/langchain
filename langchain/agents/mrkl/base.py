@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import re
-from typing import Any, Callable, List, NamedTuple, Optional, Sequence, Tuple
+from typing import Any, Callable, List, NamedTuple, Optional, Tuple
 
 from langchain.agents.agent import Agent, AgentExecutor
 from langchain.agents.mrkl.prompt import FORMAT_INSTRUCTIONS, PREFIX, SUFFIX
@@ -11,7 +11,6 @@ from langchain.callbacks.base import BaseCallbackManager
 from langchain.chains import LLMChain
 from langchain.llms.base import BaseLLM
 from langchain.prompts import PromptTemplate
-from langchain.tools.base import BaseTool
 
 FINAL_ANSWER_ACTION = "Final Answer:"
 
@@ -70,7 +69,7 @@ class ZeroShotAgent(Agent):
     @classmethod
     def create_prompt(
         cls,
-        tools: Sequence[BaseTool],
+        tools: List[Tool],
         prefix: str = PREFIX,
         suffix: str = SUFFIX,
         format_instructions: str = FORMAT_INSTRUCTIONS,
@@ -100,7 +99,7 @@ class ZeroShotAgent(Agent):
     def from_llm_and_tools(
         cls,
         llm: BaseLLM,
-        tools: Sequence[BaseTool],
+        tools: List[Tool],
         callback_manager: Optional[BaseCallbackManager] = None,
         prefix: str = PREFIX,
         suffix: str = SUFFIX,
@@ -126,7 +125,7 @@ class ZeroShotAgent(Agent):
         return cls(llm_chain=llm_chain, allowed_tools=tool_names, **kwargs)
 
     @classmethod
-    def _validate_tools(cls, tools: Sequence[BaseTool]) -> None:
+    def _validate_tools(cls, tools: List[Tool]) -> None:
         for tool in tools:
             if tool.description is None:
                 raise ValueError(
@@ -192,11 +191,7 @@ class MRKLChain(AgentExecutor):
                 mrkl = MRKLChain.from_chains(llm, chains)
         """
         tools = [
-            Tool(
-                name=c.action_name,
-                func=c.action,
-                description=c.action_description,
-            )
+            Tool(name=c.action_name, func=c.action, description=c.action_description)
             for c in chains
         ]
         agent = ZeroShotAgent.from_llm_and_tools(llm, tools)
